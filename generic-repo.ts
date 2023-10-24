@@ -11,17 +11,23 @@ interface SimpleApiBackedRepo {
   apidir: string
 }
 
+// iCreateT is basically the model's mandatory fields minus id since a new object won't be assigned an ID yet.
 // T can implement iCreateT but what really matters is iCreateT should be what that API expects
+// todo: support optional UUID client-side id generation
 export default class CustomRepo<iCreateT, T extends iRecord> extends Repository<T> implements SimpleApiBackedRepo {
   loaded = false
   apidir = ''
 
+  // todo: use DI perhaps, to specify the shape of a headers provider
+  // todo: handle null/undefined commonHeader in case of none required
+  // todo: place common header in all calls
   commonHeader = () => {
     const auth = useAuthenticationStore()
     return { headers: auth.bearerToken }
   }
 
   highestID = () => {
+  	// todo: it would be nice if id wasn't always nullable. Perhaps Model could make id not-null
     return this.all().reduce((max, x) => (x.id ?? 0) > (max.id ?? 0) ? x : max)
   }
 
@@ -42,10 +48,12 @@ export default class CustomRepo<iCreateT, T extends iRecord> extends Repository<
   }
 
   delete = async (id: number) => {
+  	// todo: debug, info, and error handling
     return await api.delete(`/${this.apidir}/${id}`)
   }
 
   update = async (newItemValue: T) => {
+  	// todo: debug, info, and error handling
     return await api.patch(`/${this.apidir}/${newItemValue.id}`)
   }
 
